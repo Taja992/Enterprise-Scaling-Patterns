@@ -2,6 +2,16 @@
 
 A scalable, microservice-based article management system built with .NET 10.0 and Clean Architecture principles. This project demonstrates enterprise-level patterns including geographical sharding, containerization, and comprehensive testing strategies.
 
+## Scalability Patterns
+
+This project implements multiple scaling axes to achieve high availability and performance:
+
+- **X-Axis Scaling (Horizontal Duplication)**: Multiple identical API instances run behind an Nginx load balancer, distributing traffic across containers (ports 8081-8083). This allows scaling by adding more instances to handle increased load.
+  
+- **Y-Axis Scaling (Functional Decomposition)**: The system is decomposed into a microservice architecture with the ArticleService handling all article-related operations. This enables independent scaling of different business functions.
+
+- **Z-Axis Scaling (Data Partitioning)**: Articles are partitioned across geographical shards based on continents, with each continent having its own PostgreSQL database. This optimizes data locality and allows scaling by adding more shards for new regions.
+
 ## 🚀 Features
 
 - **Geographical Sharding**: Articles are distributed across database shards based on continents for optimal performance and scalability
