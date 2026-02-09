@@ -1,4 +1,5 @@
 using ArticleService.Application.Interfaces;
+using ArticleService.Application.Services;
 using ArticleService.Infrastructure.Repositories;
 using ArticleService.Infrastructure.Sharding;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +12,9 @@ public static class DependencyInjection
     {
         services.AddSingleton<IShardResolver, ShardResolver>();
         services.AddScoped<IArticleRepository, ArticleRepository>();
+
+        // Add Application services
+        services.AddScoped<IArticleAppService, ArticleAppService>();
 
         return services;
     }

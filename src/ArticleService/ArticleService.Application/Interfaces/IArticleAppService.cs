@@ -2,7 +2,7 @@ using ArticleService.Application.DTOs;
 
 namespace ArticleService.Application.Interfaces;
 
-public interface IArticleService
+public interface IArticleAppService
 {
     Task<ArticleResponse> CreateArticleAsync(CreateArticleRequest request);
     Task<ArticleResponse?> GetArticleAsync(Guid id, string continent);
