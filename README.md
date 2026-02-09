@@ -51,44 +51,6 @@ The project follows Clean Architecture principles with four distinct layers:
 - **Testing**: xUnit
 - **Documentation**: Scalar/OpenAPI
 
-## 📋 Prerequisites
-
-- .NET 10.0 SDK
-- Docker and Docker Compose
-- Git
-
-## 🚀 Installation & Setup
-
-1. **Clone the repository**
-
-   ```bash
-   git clone https://github.com/yourusername/HappyHeadlines.git
-   cd HappyHeadlines
-   ```
-
-2. **Restore dependencies**
-
-   ```bash
-   dotnet restore
-   ```
-
-3. **Build the solution**
-
-   ```bash
-   dotnet build
-   ```
-
-## 🏃 Running the Application
-
-### Local Development
-
-```bash
-cd src/ArticleService/ArticleService.Api
-dotnet run
-```
-
-The API will be available at `https://localhost:7229` with Swagger UI at `https://localhost:7229/swagger`.
-
 ### Docker Deployment
 
 ```bash
@@ -100,7 +62,6 @@ This starts:
 - 3 API instances (ports 8081, 8082, 8083)
 - Nginx load balancer (port 5000)
 
-Access the application via `http://localhost:5000`.
 
 ## 🧪 Testing
 
@@ -120,22 +81,6 @@ dotnet test tests/ArticleService.IntegrationTests/
 
 When running locally, visit `https://localhost:7229/scalar` for interactive API documentation.
 
-### Key Endpoints
-
-- `GET /api/articles?continent={continent}` - Retrieve articles from a specific continent *(Note: This endpoint is currently a placeholder and returns a status message. Full implementation planned.)*
-- `POST /api/articles` - Create new article
-- `GET /api/articles/{id}?continent={continent}` - Get article by ID
-- `PUT /api/articles/{id}` - Update article
-- `DELETE /api/articles/{id}` - Delete article
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
 ## 🎯 Project Highlights
 
 - **Scalability**: Geographical sharding allows horizontal scaling across continents
@@ -146,3 +91,11 @@ When running locally, visit `https://localhost:7229/scalar` for interactive API 
 - **DevOps Ready**: Containerized deployment with Docker Compose
 
 This project showcases enterprise development practices suitable for high-traffic content platforms requiring global distribution and high availability.
+
+### Key Endpoints
+
+- `GET /api/articles?continent={continent}` - Retrieve articles from a specific continent *(Note: This endpoint is currently a placeholder and returns a status message. Full implementation planned.)*
+- `POST /api/articles` - Create new article
+- `GET /api/articles/{id}?continent={continent}` - Get article by ID
+- `PUT /api/articles/{id}` - Update article
+- `DELETE /api/articles/{id}` - Delete article
