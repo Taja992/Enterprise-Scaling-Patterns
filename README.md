@@ -72,7 +72,6 @@ This starts:
 - 3 API instances (ports 8081, 8082, 8083)
 - Nginx load balancer (port 5000)
 
-
 ## 🧪 Testing
 
 Run unit tests:
