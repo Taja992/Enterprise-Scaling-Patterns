@@ -1,4 +1,4 @@
-using ArticleService.Application.DTOs;
+using ArticleService.Application.DTOs.Articles;
 using ArticleService.Application.Interfaces;
 using ArticleService.Domain.Entities;
 

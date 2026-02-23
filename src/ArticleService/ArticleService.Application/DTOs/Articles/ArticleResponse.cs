@@ -1,4 +1,4 @@
-namespace ArticleService.Application.DTOs;
+namespace ArticleService.Application.DTOs.Articles;
 
 public record ArticleResponse(
     Guid Id,

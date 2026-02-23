@@ -1,4 +1,4 @@
-using ArticleService.Application.DTOs;
+using ArticleService.Application.DTOs.Articles;
 using ArticleService.Application.Interfaces;
 
 namespace ArticleService.Api.Endpoints;
@@ -7,7 +7,7 @@ public static class ArticleEndpoints
 {
     public static RouteGroupBuilder MapArticleEndpoints(this IEndpointRouteBuilder app)
     {
-        var api = app.MapGroup("/api/articles").WithTags("Articles").WithOpenApi();
+        var api = app.MapGroup("/api/articles").WithTags("Articles");
 
         api.MapGet("/", GetAllArticles)
             .WithName("Get all articles")
