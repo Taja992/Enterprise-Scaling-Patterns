@@ -1,110 +1,133 @@
 # HappyHeadlines
 
-A scalable, microservice-based article management system built with .NET 10.0 and Clean Architecture principles. This project demonstrates enterprise-level patterns including geographical sharding, containerization, and comprehensive testing strategies.
+A scalable, microservice-based article platform built with .NET 10.0 and Clean Architecture principles. Demonstrates geographical sharding, independent microservices, containerization, and centralized observability.
 
 ## Scalability Patterns
 
-This project implements multiple scaling axes to achieve high availability and performance:
-
-- **X-Axis Scaling (Horizontal Duplication)**: Multiple identical API instances run behind an Nginx load balancer, distributing traffic across containers (ports 8081-8083). This allows scaling by adding more instances to handle increased load.
-  
-- **Y-Axis Scaling (Functional Decomposition)**: The system is decomposed into a microservice architecture with the ArticleService handling all article-related operations. This enables independent scaling of different business functions.
-
-- **Z-Axis Scaling (Data Partitioning)**: Articles are partitioned across geographical shards based on continents, with each continent having its own PostgreSQL database. This optimizes data locality and allows scaling by adding more shards for new regions.
+- **X-Axis (Horizontal Duplication)**: Multiple API instances per service behind an Nginx load balancer. ArticleService: ports 8081–8083. DraftService: ports 8084–8086.
+- **Y-Axis (Functional Decomposition)**: `ArticleService` handles published articles and comments. `DraftService` handles author drafts. Each has its own database, Dockerfile, and deployment lifecycle.
+- **Z-Axis (Data Partitioning)**: Articles are sharded across 8 continent-based PostgreSQL databases for data locality and regional scaling.
 
 ## 🚀 Features
 
-- **Geographical Sharding**: Articles are distributed across database shards based on continents for optimal performance and scalability
-- **Clean Architecture**: Separation of concerns with distinct Domain, Application, Infrastructure, and API layers
-- **Microservice Design**: Modular architecture ready for horizontal scaling
-- **Containerization**: Docker support with multi-instance deployment via Docker Compose
-- **Load Balancing**: Nginx reverse proxy for distributing requests across multiple API instances
-- **API Documentation**: Integrated Scalar/OpenAPI for interactive API exploration
-- **Comprehensive Testing**: Unit and integration tests ensuring code quality and reliability
-- **Minimal APIs**: Modern .NET 10.0 minimal API endpoints for efficient request handling
+- **Geographical Sharding**: Articles distributed across 8 continent-based PostgreSQL shards
+- **Independent Microservices**: ArticleService and DraftService with separate DBs and containers
+- **Clean Architecture**: Domain / Application / Infrastructure / API layers enforced by project boundaries
+- **Centralized Observability**: Shared `HappyHeadlines.Observability` library wires Serilog + OpenTelemetry into any service with one method call
+- **Structured Logging + Tracing**: Seq aggregates logs and traces from all services with automatic retention and sensitive data scrubbing
+- **Correlation ID**: Every request carries an `X-Correlation-ID` header threaded through all log events and trace spans
+- **Containerization**: Full Docker Compose stack started with one command
+- **Load Balancing**: Nginx with separate upstreams for each service
+- **API Documentation**: Scalar/OpenAPI available on each service in development
 
 ## 🏗️ Architecture
 
-The project follows Clean Architecture principles with four distinct layers:
+```
+client → nginx :5000
+           ├── /api/drafts → draft-api-1/2/3   (DraftService DB :5442)
+           └── /           → article-api-1/2/3  (8 shard DBs :5432-5439, comments :5440, profanity :5441)
+                                     ↓
+                               Seq :5380 (logs + traces from all services)
+```
 
-### Domain Layer (`ArticleService.Domain`)
+### Shared Observability Library (`src/Shared/HappyHeadlines.Observability`)
 
-- Core business entities (Article, Continent enum)
-- Domain logic and validation rules
-- Factory methods for entity creation
+Single library consumed by every service. Exposes two extension methods:
+- `builder.AddHappyHeadlinesObservability("service-name")` — wires Serilog + OpenTelemetry
+- `app.UseHappyHeadlinesObservability()` — registers CorrelationId middleware + request logging
 
-### Application Layer (`ArticleService.Application`)
+### ArticleService (`src/ArticleService`)
 
-- Business logic services
-- DTOs for data transfer
-- Application interfaces
+| Layer | Project | Responsibility |
+|---|---|---|
+| Domain | `ArticleService.Domain` | Article, Comment, ProfaneWord entities |
+| Application | `ArticleService.Application` | Services, interfaces, DTOs, circuit breaker |
+| Infrastructure | `ArticleService.Infrastructure` | EF Core, repositories, continent shard router |
+| API | `ArticleService.Api` | Minimal API endpoints, DI wiring |
 
-### Infrastructure Layer (`ArticleService.Infrastructure`)
+**Databases:** 8 continent shards (ports 5432–5439), Comments DB (5440), Profanity DB (5441)
 
-- Data persistence with Entity Framework Core
-- Repository implementations
-- Sharding logic and database configuration
-- Dependency injection setup
+### DraftService (`src/DraftService`)
 
-### API Layer (`ArticleService.Api`)
+| Layer | Project | Responsibility |
+|---|---|---|
+| Domain | `DraftService.Domain` | Draft entity |
+| Application | `DraftService.Application` | DraftAppService, IDraftRepository, DTOs, Result\<T\> |
+| Infrastructure | `DraftService.Infrastructure` | EF Core DbContext, DraftRepository |
+| API | `DraftService.Api` | Minimal API endpoints, DI wiring |
 
-- RESTful endpoints using minimal APIs
-- Swagger/OpenAPI documentation
-- Request routing and middleware configuration
+**Database:** Single drafts DB (port 5442)
 
 ## 🛠️ Technologies
 
 - **Backend**: .NET 10.0, ASP.NET Core Minimal APIs
-- **Database**: PostgreSQL with Entity Framework Core
+- **Database**: PostgreSQL 16 with Entity Framework Core (Npgsql)
+- **Logging / Tracing**: Serilog, OpenTelemetry (OTLP), Seq
 - **Containerization**: Docker, Docker Compose
 - **Load Balancing**: Nginx
-- **Testing**: xUnit
 - **Documentation**: Scalar/OpenAPI
 
-### Docker Deployment
+## 🐳 Running the Stack
 
 ```bash
-docker-compose up --build
+docker-compose up --build -d
 ```
 
-This starts:
+| Container | Purpose | Port |
+|---|---|---|
+| `nginx` | Load balancer entry point | 5000 |
+| `article-api-1/2/3` | ArticleService replicas | 8081–8083 |
+| `draft-api-1/2/3` | DraftService replicas | 8084–8086 |
+| `seq` | Log & trace UI | 5380 (UI), 5341 (ingest) |
+| `db-africa` … `db-global` | Article continent shards | 5432–5439 |
+| `db-comment` | Comments database | 5440 |
+| `db-profanity` | Profanity filter database | 5441 |
+| `db-draft` | Drafts database | 5442 |
 
-- 3 API instances (ports 8081, 8082, 8083)
-- Nginx load balancer (port 5000)
-
-## 🧪 Testing
-
-Run unit tests:
+**Local development:** Start only infrastructure, then `dotnet run` the service you're working on. `appsettings.Development.json` in each service overrides all connection strings to `localhost` with the exposed Docker ports.
 
 ```bash
-dotnet test tests/ArticleService.UnitTests/
+docker-compose up -d seq db-africa db-antarctica db-asia db-europe db-northamerica db-oceania db-southamerica db-global db-comment db-profanity db-draft
+cd src/DraftService/DraftService.Api && dotnet run
 ```
 
-Run integration tests:
+## 📊 Observability
 
-```bash
-dotnet test tests/ArticleService.IntegrationTests/
-```
+| URL | What you see |
+|---|---|
+| `http://localhost:5380` | Seq — all structured logs and traces from every service |
+| `http://localhost:8081/scalar` | ArticleService OpenAPI (replica 1) |
+| `http://localhost:8084/scalar` | DraftService OpenAPI (replica 1) |
 
-## 📚 API Documentation
+**Filtering in Seq:**
+- `ServiceName = 'article-service'` — ArticleService events only
+- `ServiceName = 'draft-service'` — DraftService events only
+- `CorrelationId = '<id>'` — all events for a single request across all services
 
-When running locally, visit `https://localhost:7229/scalar` for interactive API documentation.
+Log levels: `Debug` (queries, dev only) → `Information` (business events) → `Warning` (not found, validation) → `Error` (exceptions, DB failures). Passwords, tokens, and PII are automatically redacted by `SensitivePropertyScrubber` before any log event leaves the process.
 
-## 🎯 Project Highlights
+## 📚 API Endpoints
 
-- **Scalability**: Geographical sharding allows horizontal scaling across continents
-- **Performance**: Multi-instance deployment with load balancing
-- **Maintainability**: Clean Architecture ensures separation of concerns
-- **Testability**: Comprehensive test coverage for reliability
-- **Modern .NET**: Leverages latest .NET 10.0 features and minimal APIs
-- **DevOps Ready**: Containerized deployment with Docker Compose
+**ArticleService** (via nginx `http://localhost:5000`)
 
-This project showcases enterprise development practices suitable for high-traffic content platforms requiring global distribution and high availability.
+| Method | Route | Description |
+|---|---|---|
+| `POST` | `/api/articles` | Create article |
+| `GET` | `/api/articles/{id}?continent={c}` | Get article by ID |
+| `PUT` | `/api/articles/{id}` | Update article |
+| `DELETE` | `/api/articles/{id}` | Delete article |
+| `POST` | `/api/comments` | Create comment (profanity-checked) |
+| `GET` | `/api/comments/{id}` | Get comment by ID |
+| `GET` | `/api/articles/{id}/comments` | Get all comments for an article |
+| `POST` | `/api/profanity` | Add profanity word |
+| `GET` | `/api/profanity` | List all profanity words |
 
-### Key Endpoints
+**DraftService** (via nginx `http://localhost:5000`)
 
-- `GET /api/articles?continent={continent}` - Retrieve articles from a specific continent *(Note: This endpoint is currently a placeholder and returns a status message. Full implementation planned.)*
-- `POST /api/articles` - Create new article
-- `GET /api/articles/{id}?continent={continent}` - Get article by ID
-- `PUT /api/articles/{id}` - Update article
-- `DELETE /api/articles/{id}` - Delete article
+| Method | Route | Description |
+|---|---|---|
+| `POST` | `/api/drafts` | Save new draft |
+| `GET` | `/api/drafts/{id}` | Get draft by ID |
+| `GET` | `/api/drafts/author/{authorId}` | Get all drafts by author |
+| `PUT` | `/api/drafts/{id}` | Update draft |
+| `DELETE` | `/api/drafts/{id}` | Delete draft |
