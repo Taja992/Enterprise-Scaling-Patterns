@@ -12,6 +12,18 @@
     <Project Path="src/DraftService/DraftService.Domain/DraftService.Domain.csproj" />
     <Project Path="src/DraftService/DraftService.Infrastructure/DraftService.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/CommentService/">
+    <Project Path="src/CommentService/CommentService.Api/CommentService.Api.csproj" />
+    <Project Path="src/CommentService/CommentService.Application/CommentService.Application.csproj" />
+    <Project Path="src/CommentService/CommentService.Domain/CommentService.Domain.csproj" />
+    <Project Path="src/CommentService/CommentService.Infrastructure/CommentService.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/ProfanityService/">
+    <Project Path="src/ProfanityService/ProfanityService.Api/ProfanityService.Api.csproj" />
+    <Project Path="src/ProfanityService/ProfanityService.Application/ProfanityService.Application.csproj" />
+    <Project Path="src/ProfanityService/ProfanityService.Domain/ProfanityService.Domain.csproj" />
+    <Project Path="src/ProfanityService/ProfanityService.Infrastructure/ProfanityService.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/src/Shared/">
     <Project Path="src/Shared/HappyHeadlines.Observability/HappyHeadlines.Observability.csproj" />
   </Folder>

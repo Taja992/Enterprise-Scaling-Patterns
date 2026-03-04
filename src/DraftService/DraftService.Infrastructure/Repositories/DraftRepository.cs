@@ -28,8 +28,8 @@ public class DraftRepository : IDraftRepository
 
     public async Task<List<Draft>> GetByAuthorIdAsync(Guid authorId)
     {
-        return await _dbContext.Drafts
-            .Where(d => d.AuthorId == authorId)
+        return await _dbContext
+            .Drafts.Where(d => d.AuthorId == authorId)
             .OrderByDescending(d => d.UpdatedAt)
             .ToListAsync();
     }

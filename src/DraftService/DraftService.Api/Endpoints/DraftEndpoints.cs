@@ -1,5 +1,5 @@
 using DraftService.Application.DTOs;
-using DraftService.Application.Services;
+using DraftService.Application.Interfaces;
 
 namespace DraftService.Api.Endpoints;
 
@@ -32,10 +32,7 @@ public static class DraftEndpoints
         return api;
     }
 
-    private static async Task<IResult> SaveDraft(
-        SaveDraftRequest request,
-        DraftAppService service
-    )
+    private static async Task<IResult> SaveDraft(SaveDraftRequest request, IDraftAppService service)
     {
         var result = await service.SaveDraftAsync(request);
         return result.IsSuccess
@@ -43,7 +40,7 @@ public static class DraftEndpoints
             : Results.Problem(result.Error!.Message, statusCode: 500);
     }
 
-    private static async Task<IResult> GetDraft(Guid id, DraftAppService service)
+    private static async Task<IResult> GetDraft(Guid id, IDraftAppService service)
     {
         var result = await service.GetDraftAsync(id);
         return result.IsSuccess
@@ -51,7 +48,7 @@ public static class DraftEndpoints
             : Results.NotFound(result.Error!.Message);
     }
 
-    private static async Task<IResult> GetDraftsByAuthor(Guid authorId, DraftAppService service)
+    private static async Task<IResult> GetDraftsByAuthor(Guid authorId, IDraftAppService service)
     {
         var result = await service.GetDraftsByAuthorAsync(authorId);
         return Results.Ok(result.Value);
@@ -60,7 +57,7 @@ public static class DraftEndpoints
     private static async Task<IResult> UpdateDraft(
         Guid id,
         UpdateDraftRequest request,
-        DraftAppService service
+        IDraftAppService service
     )
     {
         var result = await service.UpdateDraftAsync(id, request);
@@ -69,7 +66,7 @@ public static class DraftEndpoints
             : Results.NotFound(result.Error!.Message);
     }
 
-    private static async Task<IResult> DeleteDraft(Guid id, DraftAppService service)
+    private static async Task<IResult> DeleteDraft(Guid id, IDraftAppService service)
     {
         var result = await service.DeleteDraftAsync(id);
         return result.IsSuccess ? Results.NoContent() : Results.NotFound(result.Error!.Message);

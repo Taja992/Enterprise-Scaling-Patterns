@@ -1,0 +1,29 @@
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
+WORKDIR /app
+EXPOSE 8080
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+ARG BUILD_CONFIGURATION=Release
+WORKDIR /src
+
+COPY ["src/ProfanityService/ProfanityService.Api/ProfanityService.Api.csproj", "src/ProfanityService/ProfanityService.Api/"]
+COPY ["src/ProfanityService/ProfanityService.Application/ProfanityService.Application.csproj", "src/ProfanityService/ProfanityService.Application/"]
+COPY ["src/ProfanityService/ProfanityService.Domain/ProfanityService.Domain.csproj", "src/ProfanityService/ProfanityService.Domain/"]
+COPY ["src/ProfanityService/ProfanityService.Infrastructure/ProfanityService.Infrastructure.csproj", "src/ProfanityService/ProfanityService.Infrastructure/"]
+COPY ["src/Shared/HappyHeadlines.Observability/HappyHeadlines.Observability.csproj", "src/Shared/HappyHeadlines.Observability/"]
+
+RUN dotnet restore "src/ProfanityService/ProfanityService.Api/ProfanityService.Api.csproj"
+
+COPY . .
+
+WORKDIR "/src/src/ProfanityService/ProfanityService.Api"
+RUN dotnet build "ProfanityService.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
+
+FROM build AS publish
+ARG BUILD_CONFIGURATION=Release
+RUN dotnet publish "ProfanityService.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "ProfanityService.Api.dll"]

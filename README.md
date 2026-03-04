@@ -22,7 +22,7 @@ A scalable, microservice-based article platform built with .NET 10.0 and Clean A
 
 ## 🏗️ Architecture
 
-```
+```md
 client → nginx :5000
            ├── /api/drafts → draft-api-1/2/3   (DraftService DB :5442)
            └── /           → article-api-1/2/3  (8 shard DBs :5432-5439, comments :5440, profanity :5441)
@@ -33,13 +33,14 @@ client → nginx :5000
 ### Shared Observability Library (`src/Shared/HappyHeadlines.Observability`)
 
 Single library consumed by every service. Exposes two extension methods:
+
 - `builder.AddHappyHeadlinesObservability("service-name")` — wires Serilog + OpenTelemetry
 - `app.UseHappyHeadlinesObservability()` — registers CorrelationId middleware + request logging
 
 ### ArticleService (`src/ArticleService`)
 
 | Layer | Project | Responsibility |
-|---|---|---|
+| --- | --- | --- |
 | Domain | `ArticleService.Domain` | Article, Comment, ProfaneWord entities |
 | Application | `ArticleService.Application` | Services, interfaces, DTOs, circuit breaker |
 | Infrastructure | `ArticleService.Infrastructure` | EF Core, repositories, continent shard router |
@@ -50,7 +51,7 @@ Single library consumed by every service. Exposes two extension methods:
 ### DraftService (`src/DraftService`)
 
 | Layer | Project | Responsibility |
-|---|---|---|
+| --- | --- | --- |
 | Domain | `DraftService.Domain` | Draft entity |
 | Application | `DraftService.Application` | DraftAppService, IDraftRepository, DTOs, Result\<T\> |
 | Infrastructure | `DraftService.Infrastructure` | EF Core DbContext, DraftRepository |
@@ -74,7 +75,7 @@ docker-compose up --build -d
 ```
 
 | Container | Purpose | Port |
-|---|---|---|
+| --- | --- | --- |
 | `nginx` | Load balancer entry point | 5000 |
 | `article-api-1/2/3` | ArticleService replicas | 8081–8083 |
 | `draft-api-1/2/3` | DraftService replicas | 8084–8086 |
@@ -94,12 +95,13 @@ cd src/DraftService/DraftService.Api && dotnet run
 ## 📊 Observability
 
 | URL | What you see |
-|---|---|
+| --- | --- |
 | `http://localhost:5380` | Seq — all structured logs and traces from every service |
 | `http://localhost:8081/scalar` | ArticleService OpenAPI (replica 1) |
 | `http://localhost:8084/scalar` | DraftService OpenAPI (replica 1) |
 
 **Filtering in Seq:**
+
 - `ServiceName = 'article-service'` — ArticleService events only
 - `ServiceName = 'draft-service'` — DraftService events only
 - `CorrelationId = '<id>'` — all events for a single request across all services
@@ -111,7 +113,7 @@ Log levels: `Debug` (queries, dev only) → `Information` (business events) → 
 **ArticleService** (via nginx `http://localhost:5000`)
 
 | Method | Route | Description |
-|---|---|---|
+| --- | --- | --- |
 | `POST` | `/api/articles` | Create article |
 | `GET` | `/api/articles/{id}?continent={c}` | Get article by ID |
 | `PUT` | `/api/articles/{id}` | Update article |
@@ -125,7 +127,7 @@ Log levels: `Debug` (queries, dev only) → `Information` (business events) → 
 **DraftService** (via nginx `http://localhost:5000`)
 
 | Method | Route | Description |
-|---|---|---|
+| --- | --- | --- |
 | `POST` | `/api/drafts` | Save new draft |
 | `GET` | `/api/drafts/{id}` | Get draft by ID |
 | `GET` | `/api/drafts/author/{authorId}` | Get all drafts by author |

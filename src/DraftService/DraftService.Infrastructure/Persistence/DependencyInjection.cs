@@ -20,7 +20,7 @@ public static class DependencyInjection
         );
 
         services.AddScoped<IDraftRepository, DraftRepository>();
-        services.AddScoped<DraftAppService>();
+        services.AddScoped<IDraftAppService, DraftAppService>();
 
         return services;
     }

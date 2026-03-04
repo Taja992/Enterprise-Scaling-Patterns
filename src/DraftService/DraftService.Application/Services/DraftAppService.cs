@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace DraftService.Application.Services;
 
-public class DraftAppService
+public class DraftAppService : IDraftAppService
 {
     private readonly IDraftRepository _repository;
     private readonly ILogger<DraftAppService> _logger;

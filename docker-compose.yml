@@ -112,6 +112,110 @@ services:
       - db-draft
       - seq
 
+  # ── Profanity API — 3 load-balanced replicas ─────────────────────────────────
+  profanity-api-1:
+    build:
+      context: .
+      dockerfile: Dockerfile.ProfanityService
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      INSTANCE_ID: "1"
+      ConnectionStrings__ProfanityDb: "Host=db-profanity;Port=5432;Database=profanity;Username=postgres;Password=postgres"
+      Seq__ServerUrl: "http://seq:5341"
+      OpenTelemetry__OtlpEndpoint: "http://seq:4317"
+    ports:
+      - "8090:8080"
+    depends_on:
+      - db-profanity
+      - seq
+
+  profanity-api-2:
+    build:
+      context: .
+      dockerfile: Dockerfile.ProfanityService
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      INSTANCE_ID: "2"
+      ConnectionStrings__ProfanityDb: "Host=db-profanity;Port=5432;Database=profanity;Username=postgres;Password=postgres"
+      Seq__ServerUrl: "http://seq:5341"
+      OpenTelemetry__OtlpEndpoint: "http://seq:4317"
+    ports:
+      - "8091:8080"
+    depends_on:
+      - db-profanity
+      - seq
+
+  profanity-api-3:
+    build:
+      context: .
+      dockerfile: Dockerfile.ProfanityService
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      INSTANCE_ID: "3"
+      ConnectionStrings__ProfanityDb: "Host=db-profanity;Port=5432;Database=profanity;Username=postgres;Password=postgres"
+      Seq__ServerUrl: "http://seq:5341"
+      OpenTelemetry__OtlpEndpoint: "http://seq:4317"
+    ports:
+      - "8092:8080"
+    depends_on:
+      - db-profanity
+      - seq
+
+  # ── Comment API — 3 load-balanced replicas ────────────────────────────────────
+  comment-api-1:
+    build:
+      context: .
+      dockerfile: Dockerfile.CommentService
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      INSTANCE_ID: "1"
+      ConnectionStrings__CommentDb: "Host=db-comment;Port=5432;Database=comments;Username=postgres;Password=postgres"
+      ProfanityService__BaseUrl: "http://profanity-api-1:8080"
+      Seq__ServerUrl: "http://seq:5341"
+      OpenTelemetry__OtlpEndpoint: "http://seq:4317"
+    ports:
+      - "8087:8080"
+    depends_on:
+      - db-comment
+      - profanity-api-1
+      - seq
+
+  comment-api-2:
+    build:
+      context: .
+      dockerfile: Dockerfile.CommentService
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      INSTANCE_ID: "2"
+      ConnectionStrings__CommentDb: "Host=db-comment;Port=5432;Database=comments;Username=postgres;Password=postgres"
+      ProfanityService__BaseUrl: "http://profanity-api-1:8080"
+      Seq__ServerUrl: "http://seq:5341"
+      OpenTelemetry__OtlpEndpoint: "http://seq:4317"
+    ports:
+      - "8088:8080"
+    depends_on:
+      - db-comment
+      - profanity-api-1
+      - seq
+
+  comment-api-3:
+    build:
+      context: .
+      dockerfile: Dockerfile.CommentService
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      INSTANCE_ID: "3"
+      ConnectionStrings__CommentDb: "Host=db-comment;Port=5432;Database=comments;Username=postgres;Password=postgres"
+      ProfanityService__BaseUrl: "http://profanity-api-1:8080"
+      Seq__ServerUrl: "http://seq:5341"
+      OpenTelemetry__OtlpEndpoint: "http://seq:4317"
+    ports:
+      - "8089:8080"
+    depends_on:
+      - db-comment
+      - profanity-api-1
+      - seq
+
   # ── 8 Region Article databases ───────────────────────────────────────────────────────────
   db-africa:
     image: postgres:16

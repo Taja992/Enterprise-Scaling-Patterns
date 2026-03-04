@@ -27,7 +27,5 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.MapArticleEndpoints();
-app.MapCommentEndpoints();
-app.MapProfanityEndpoints();
 
 app.Run();
