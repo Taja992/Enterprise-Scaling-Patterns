@@ -1,0 +1,29 @@
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
+WORKDIR /app
+EXPOSE 8080
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+ARG BUILD_CONFIGURATION=Release
+WORKDIR /src
+
+COPY ["src/DraftService/DraftService.Api/DraftService.Api.csproj", "src/DraftService/DraftService.Api/"]
+COPY ["src/DraftService/DraftService.Application/DraftService.Application.csproj", "src/DraftService/DraftService.Application/"]
+COPY ["src/DraftService/DraftService.Domain/DraftService.Domain.csproj", "src/DraftService/DraftService.Domain/"]
+COPY ["src/DraftService/DraftService.Infrastructure/DraftService.Infrastructure.csproj", "src/DraftService/DraftService.Infrastructure/"]
+COPY ["src/Shared/HappyHeadlines.Observability/HappyHeadlines.Observability.csproj", "src/Shared/HappyHeadlines.Observability/"]
+
+RUN dotnet restore "src/DraftService/DraftService.Api/DraftService.Api.csproj"
+
+COPY . .
+
+WORKDIR "/src/src/DraftService/DraftService.Api"
+RUN dotnet build "DraftService.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
+
+FROM build AS publish
+ARG BUILD_CONFIGURATION=Release
+RUN dotnet publish "DraftService.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "DraftService.Api.dll"]

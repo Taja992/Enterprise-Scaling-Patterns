@@ -6,6 +6,15 @@
     <Project Path="src/ArticleService/ArticleService.Domain/ArticleService.Domain.csproj" />
     <Project Path="src/ArticleService/ArticleService.Infrastructure/ArticleService.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/DraftService/">
+    <Project Path="src/DraftService/DraftService.Api/DraftService.Api.csproj" />
+    <Project Path="src/DraftService/DraftService.Application/DraftService.Application.csproj" />
+    <Project Path="src/DraftService/DraftService.Domain/DraftService.Domain.csproj" />
+    <Project Path="src/DraftService/DraftService.Infrastructure/DraftService.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Shared/">
+    <Project Path="src/Shared/HappyHeadlines.Observability/HappyHeadlines.Observability.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ArticleService.IntegrationTests/ArticleService.IntegrationTests.csproj" />
     <Project Path="tests/ArticleService.UnitTests/ArticleService.UnitTests.csproj" />

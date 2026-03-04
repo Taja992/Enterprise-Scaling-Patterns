@@ -9,6 +9,14 @@
       "path": "src/ArticleService"
     },
     {
+      "name": "📝 Draft Service",
+      "path": "src/DraftService"
+    },
+    {
+      "name": "🔧 Shared",
+      "path": "src/Shared"
+    },
+    {
       "name": "🧪 Tests",
       "path": "tests"
     },
