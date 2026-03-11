@@ -26,6 +26,44 @@ services:
     volumes:
       - seq-data:/data
 
+    # ── Redis — shared cache for ArticleService and CommentService ────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 512mb --maxmemory-policy noeviction
+
+     # ── Prometheus — metrics scraper ─────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - article-api-1
+      - article-api-2
+      - article-api-3
+      - comment-api-1
+      - comment-api-2
+      - comment-api-3
+
+        # ── Grafana — dashboard UI ────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+    depends_on:
+      - prometheus
+
   # ── Article API — 3 load-balanced replicas ────────────────────────────────────
   article-api-1:
     build: .
@@ -34,10 +72,12 @@ services:
       INSTANCE_ID: "1"
       Seq__ServerUrl: "http://seq:5341"
       OpenTelemetry__OtlpEndpoint: "http://seq:4317"
+      Redis__ConnectionString: "redis:6379"
     ports:
       - "8081:8080"
     depends_on:
       - seq
+      - redis
 
   article-api-2:
     build: .
@@ -46,10 +86,12 @@ services:
       INSTANCE_ID: "2"
       Seq__ServerUrl: "http://seq:5341"
       OpenTelemetry__OtlpEndpoint: "http://seq:4317"
+      Redis__ConnectionString: "redis:6379"
     ports:
       - "8082:8080"
     depends_on:
       - seq
+      - redis
 
   article-api-3:
     build: .
@@ -58,10 +100,12 @@ services:
       INSTANCE_ID: "3"
       Seq__ServerUrl: "http://seq:5341"
       OpenTelemetry__OtlpEndpoint: "http://seq:4317"
+      Redis__ConnectionString: "redis:6379"
     ports:
       - "8083:8080"
     depends_on:
       - seq
+      - redis
 
   # ── Draft API — 3 load-balanced replicas ────────────────────────────────────
   draft-api-1:
@@ -173,12 +217,14 @@ services:
       ProfanityService__BaseUrl: "http://profanity-api-1:8080"
       Seq__ServerUrl: "http://seq:5341"
       OpenTelemetry__OtlpEndpoint: "http://seq:4317"
+      Redis__ConnectionString: "redis:6379"
     ports:
       - "8087:8080"
     depends_on:
       - db-comment
       - profanity-api-1
       - seq
+      - redis
 
   comment-api-2:
     build:
@@ -191,12 +237,14 @@ services:
       ProfanityService__BaseUrl: "http://profanity-api-1:8080"
       Seq__ServerUrl: "http://seq:5341"
       OpenTelemetry__OtlpEndpoint: "http://seq:4317"
+      Redis__ConnectionString: "redis:6379"
     ports:
       - "8088:8080"
     depends_on:
       - db-comment
       - profanity-api-1
       - seq
+      - redis
 
   comment-api-3:
     build:
@@ -209,12 +257,14 @@ services:
       ProfanityService__BaseUrl: "http://profanity-api-1:8080"
       Seq__ServerUrl: "http://seq:5341"
       OpenTelemetry__OtlpEndpoint: "http://seq:4317"
+      Redis__ConnectionString: "redis:6379"
     ports:
       - "8089:8080"
     depends_on:
       - db-comment
       - profanity-api-1
       - seq
+      - redis
 
   # ── 8 Region Article databases ───────────────────────────────────────────────────────────
   db-africa:
@@ -324,3 +374,4 @@ services:
 volumes:
   seq-data:
   db-draft-data:
+  grafana-data:

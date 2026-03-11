@@ -1,0 +1,26 @@
+# How this works: Prometheus runs inside Docker and uses Docker's internal DNS. The names article-api-1, comment-api-1 etc. 
+# resolve to the correct container IPs. Port 8080 is the container's internal port (the APIs listen on 0.0.0.0:8080). 
+# The /metrics path is the default for prometheus-net and does not need to be specified.
+
+global:
+  scrape_interval: 15s      # How often Prometheus polls each target
+  evaluation_interval: 15s  # How often rules are evaluated
+
+scrape_configs:
+  - job_name: 'article-cache'
+    static_configs:
+      - targets:
+          - 'article-api-1:8080'
+          - 'article-api-2:8080'
+          - 'article-api-3:8080'
+        labels:
+          service: 'article-service'
+
+  - job_name: 'comment-cache'
+    static_configs:
+      - targets:
+          - 'comment-api-1:8080'
+          - 'comment-api-2:8080'
+          - 'comment-api-3:8080'
+        labels:
+          service: 'comment-service'
