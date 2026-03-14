@@ -64,4 +64,8 @@ public class ArticleRedisCache : IArticleCache
         var tasks = articles.Select(SetAsync);
         await Task.WhenAll(tasks);
     }
+    public async Task RemoveAsync(string cacheKey)
+    {
+        await _redis.KeyDeleteAsync(cacheKey);
+    }
 }

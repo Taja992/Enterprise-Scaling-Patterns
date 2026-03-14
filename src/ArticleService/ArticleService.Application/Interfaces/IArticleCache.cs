@@ -9,4 +9,6 @@ public interface IArticleCache
     Task SetAsync(ArticleResponse article);
     
     Task SetBatchAsync(IEnumerable<ArticleResponse> articles);
+    Task RemoveAsync(string cacheKey);
+
 }

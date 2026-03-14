@@ -41,15 +41,34 @@ public class ArticleAppService : IArticleAppService
     public async Task<ArticleResponse?> GetArticleAsync(Guid id, string continent)
     {
         var cached = await _cache.GetAsync(id, continent);
+
         if (cached is not null)
         {
-            _logger.LogDebug("Article {Id} served from cache (shard: {Continent})", id, continent);
+            _logger.LogDebug(
+                "Article {Id} served from cache (shard: {Continent})",
+                id,
+                continent
+            );
+
             return cached;
         }
-        
-        _logger.LogDebug("Article {Id} not in cache — querying database (shard: {Continent})", id, continent);
+
+        _logger.LogDebug(
+            "Article {Id} not in cache — querying database (shard: {Continent})",
+            id,
+            continent
+        );
+
         var article = await _repository.GetByIdAsync(id, continent);
-        return article is not null ? MapToResponse(article) : null;
+
+        if (article is null)
+            return null;
+
+        var response = MapToResponse(article);
+
+        await _cache.SetAsync(response);
+
+        return response;
     }
 
     public async Task<ArticleResponse?> UpdateArticleAsync(
@@ -64,9 +83,18 @@ public class ArticleAppService : IArticleAppService
             return null;
 
         article.Update(request.Title, request.Content);
+
         await _repository.UpdateAsync(article, continent);
-        
-        await _cache.SetAsync(MapToResponse(article));
+
+        var cacheKey = $"article:{continent}:{id}";
+
+        await _cache.RemoveAsync(cacheKey);
+
+        _logger.LogInformation(
+            "Cache invalidated for article {Id} in shard {Continent}",
+            id,
+            continent
+        );
 
         return MapToResponse(article);
     }
@@ -79,7 +107,29 @@ public class ArticleAppService : IArticleAppService
             return false;
 
         await _repository.DeleteAsync(id, continent);
+
+        var cacheKey = $"article:{continent}:{id}";
+        await _cache.RemoveAsync(cacheKey);
+
+        _logger.LogInformation(
+            "Cache invalidated after delete for article {Id} in shard {Continent}",
+            id,
+            continent
+        );
+
         return true;
+    }
+
+    public async Task<List<ArticleResponse>> GetAllArticlesAsync(string continent)
+    {
+        _logger.LogInformation(
+            "Fetching all articles for shard {Continent}",
+            continent
+        );
+
+        var articles = await _repository.GetAllByContinentAsync(continent);
+
+        return articles.Select(MapToResponse).ToList();
     }
 
     private static ArticleResponse MapToResponse(Article article) =>
