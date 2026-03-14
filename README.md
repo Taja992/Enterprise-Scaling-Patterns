@@ -113,6 +113,8 @@ cd src/DraftService/DraftService.Api && dotnet run
       `ServiceName = 'comment-service' and (@Message like '%not in cache%' or @Message like '%served from cache%' or @Message like '%Comment cache MISS%' or @Message like '%Comment cache HIT%')`
 3. Expected order: first request shows MISS (`not in cache` / `Comment cache MISS`), second request shows HIT (`served from cache` / `Comment cache HIT`).
 
+![Comment cache Seq example](assets/images/commentcache.png)
+
 **Quick check: Article cache MISS then HIT**
 
 1. Use two quick checks:
@@ -125,6 +127,8 @@ cd src/DraftService/DraftService.Api && dotnet run
       - HIT path: `Cache HIT for article ...` and `Article ... served from cache ...`.
 
 Reason: `POST /api/articles` writes through to Redis immediately, so a follow-up `GET` for that new article is typically a HIT.
+
+![Article cache Seq example](assets/images/articlecache.png)
 
 Log levels: `Debug` (queries, dev only) → `Information` (business events) → `Warning` (not found, validation) → `Error` (exceptions, DB failures). Passwords, tokens, and PII are automatically redacted by `SensitivePropertyScrubber` before any log event leaves the process.
 
