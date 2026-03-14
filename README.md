@@ -106,6 +106,26 @@ cd src/DraftService/DraftService.Api && dotnet run
 - `ServiceName = 'draft-service'` — DraftService events only
 - `CorrelationId = '<id>'` — all events for a single request across all services
 
+**Quick check: Comment cache MISS then HIT**
+
+1. Call `GET /api/comments/article/{articleId}` once, then call it again.
+2. In Seq, filter to CommentService and cache messages:
+      `ServiceName = 'comment-service' and (@Message like '%not in cache%' or @Message like '%served from cache%' or @Message like '%Comment cache MISS%' or @Message like '%Comment cache HIT%')`
+3. Expected order: first request shows MISS (`not in cache` / `Comment cache MISS`), second request shows HIT (`served from cache` / `Comment cache HIT`).
+
+**Quick check: Article cache MISS then HIT**
+
+1. Use two quick checks:
+      - Guaranteed MISS: call `GET /api/articles/{random-guid}?continent={continent}` once.
+      - Guaranteed HIT: `POST /api/articles`, then call `GET /api/articles/{createdId}?continent={continent}`.
+2. In Seq, filter to ArticleService and cache messages:
+      `ServiceName = 'article-service' and (@Message like '%not in cache%' or @Message like '%served from cache%' or @Message like '%Cache MISS for article%' or @Message like '%Cache HIT for article%')`
+3. Expected logs:
+      - MISS path: `Cache MISS for article ...` and `Article ... not in cache — querying database`.
+      - HIT path: `Cache HIT for article ...` and `Article ... served from cache ...`.
+
+Reason: `POST /api/articles` writes through to Redis immediately, so a follow-up `GET` for that new article is typically a HIT.
+
 Log levels: `Debug` (queries, dev only) → `Information` (business events) → `Warning` (not found, validation) → `Error` (exceptions, DB failures). Passwords, tokens, and PII are automatically redacted by `SensitivePropertyScrubber` before any log event leaves the process.
 
 ## 📚 API Endpoints
