@@ -103,43 +103,34 @@ cd src/DraftService/DraftService.Api && dotnet run
 | `http://localhost:8081/scalar` | ArticleService OpenAPI (replica 1) |
 | `http://localhost:8084/scalar` | DraftService OpenAPI (replica 1) |
 
-### Filtering In Seq
+### Proof-Of-Concept Script
 
-- `ServiceName = 'article-service'` — ArticleService events only
-- `ServiceName = 'draft-service'` — DraftService events only
-- `CorrelationId = '<id>'` — all events for a single request across all services
+Use the script below to generate cache traffic and print proof details for both Seq and Grafana.
 
-### Comment Cache MISS Then HIT
+```powershell
+.\scripts\demo-observability.ps1
+```
 
-1. Call `GET /api/comments/article/{articleId}` once, then call it again.
-2. In Seq, filter to CommentService and cache messages:
-      `ServiceName = 'comment-service' and (@Message like '%not in cache%' or @Message like '%served from cache%' or @Message like '%Comment cache MISS%' or @Message like '%Comment cache HIT%')`
-3. Expected order: first request shows MISS (`not in cache` / `Comment cache MISS`), second request shows HIT (`served from cache` / `Comment cache HIT`).
+What the script does:
+
+- Starts the Docker Compose stack if needed
+- Generates Article cache misses and hits
+- Generates Comment cache miss and hits
+- Waits for Prometheus scrape and prints cache metric values
+- Prints ready-to-paste Seq filters and dashboard hints
+
+Use these Seq filters (also printed by the script):
+
+- `ServiceName = 'article-service' and (@Message like '%Cache MISS for article%' or @Message like '%Cache HIT for article%' or @Message like '%not in cache%' or @Message like '%served from cache%')`
+- `ServiceName = 'comment-service' and (@Message like '%Comment cache MISS%' or @Message like '%Comment cache HIT%' or @Message like '%not in cache%' or @Message like '%served from cache%')`
+
+For Grafana, open `HappyHeadlines - Cache Hit Ratios` and set time range to `Last 15 minutes`.
+
+![Grafana cache dashboard](assets/images/grafana.png)
 
 ![Comment cache Seq example](assets/images/commentcache.png)
 
-### Article Cache MISS Then HIT
-
-1. Use two quick checks:
-      - Guaranteed MISS: call `GET /api/articles/{random-guid}?continent={continent}` once.
-      - Guaranteed HIT: `POST /api/articles`, then call `GET /api/articles/{createdId}?continent={continent}`.
-2. In Seq, filter to ArticleService and cache messages:
-      `ServiceName = 'article-service' and (@Message like '%not in cache%' or @Message like '%served from cache%' or @Message like '%Cache MISS for article%' or @Message like '%Cache HIT for article%')`
-3. Expected logs:
-      - MISS path: `Cache MISS for article ...` and `Article ... not in cache — querying database`.
-      - HIT path: `Cache HIT for article ...` and `Article ... served from cache ...`.
-
-Note: `POST /api/articles` writes through to Redis immediately, so a follow-up `GET` for that new article is typically a HIT.
-
 ![Article cache Seq example](assets/images/articlecache.png)
-
-### Grafana Cache Dashboard
-
-1. Open `http://localhost:3000` and open the `HappyHeadlines — Cache Hit Ratios` dashboard.
-2. Set the time range to `Last 15 minutes`.
-3. Run a few article/comment cache requests, then refresh the dashboard to see Article/Comment hit ratio, hit vs miss counts, and Comment cache size.
-
-![Grafana cache dashboard](assets/images/grafana.png)
 
 Log levels: `Debug` (queries, dev only) → `Information` (business events) → `Warning` (not found, validation) → `Error` (exceptions, DB failures). Passwords, tokens, and PII are automatically redacted by `SensitivePropertyScrubber` before any log event leaves the process.
 

@@ -47,7 +47,7 @@
       },
       "targets": [
         {
-          "expr": "sum(increase(article_cache_hits_total[15m])) / clamp_min(sum(increase(article_cache_hits_total[15m])) + sum(increase(article_cache_misses_total[15m])), 1)",
+          "expr": "(sum(increase(article_cache_hits_total[15m])) or on() vector(0)) / clamp_min((sum(increase(article_cache_hits_total[15m])) or on() vector(0)) + (sum(increase(article_cache_misses_total[15m])) or on() vector(0)), 1)",
           "legendFormat": "Hit Ratio",
           "refId": "A"
         }
@@ -88,7 +88,7 @@
       },
       "targets": [
         {
-          "expr": "sum(increase(comment_cache_hits_total[15m])) / clamp_min(sum(increase(comment_cache_hits_total[15m])) + sum(increase(comment_cache_misses_total[15m])), 1)",
+          "expr": "(sum(increase(comment_cache_hits_total[15m])) or on() vector(0)) / clamp_min((sum(increase(comment_cache_hits_total[15m])) or on() vector(0)) + (sum(increase(comment_cache_misses_total[15m])) or on() vector(0)), 1)",
           "legendFormat": "Hit Ratio",
           "refId": "A"
         }
@@ -128,12 +128,12 @@
       },
       "targets": [
         {
-          "expr": "sum(increase(article_cache_hits_total[15m]))",
+          "expr": "sum(increase(article_cache_hits_total[15m])) or on() vector(0)",
           "legendFormat": "Hits",
           "refId": "A"
         },
         {
-          "expr": "sum(increase(article_cache_misses_total[15m]))",
+          "expr": "sum(increase(article_cache_misses_total[15m])) or on() vector(0)",
           "legendFormat": "Misses",
           "refId": "B"
         }
@@ -173,12 +173,12 @@
       },
       "targets": [
         {
-          "expr": "sum(increase(comment_cache_hits_total[15m]))",
+          "expr": "sum(increase(comment_cache_hits_total[15m])) or on() vector(0)",
           "legendFormat": "Hits",
           "refId": "A"
         },
         {
-          "expr": "sum(increase(comment_cache_misses_total[15m]))",
+          "expr": "sum(increase(comment_cache_misses_total[15m])) or on() vector(0)",
           "legendFormat": "Misses",
           "refId": "B"
         }
