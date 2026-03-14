@@ -85,7 +85,9 @@ docker-compose up --build -d
 | `db-profanity` | Profanity filter database | 5441 |
 | `db-draft` | Drafts database | 5442 |
 
-**Local development:** Start only infrastructure, then `dotnet run` the service you're working on. `appsettings.Development.json` in each service overrides all connection strings to `localhost` with the exposed Docker ports.
+### Local Development
+
+Start only infrastructure, then `dotnet run` the service you're working on. `appsettings.Development.json` in each service overrides all connection strings to `localhost` with the exposed Docker ports.
 
 ```bash
 docker-compose up -d seq db-africa db-antarctica db-asia db-europe db-northamerica db-oceania db-southamerica db-global db-comment db-profanity db-draft
@@ -101,22 +103,22 @@ cd src/DraftService/DraftService.Api && dotnet run
 | `http://localhost:8081/scalar` | ArticleService OpenAPI (replica 1) |
 | `http://localhost:8084/scalar` | DraftService OpenAPI (replica 1) |
 
-**Filtering in Seq:**
+### Filtering In Seq
 
 - `ServiceName = 'article-service'` — ArticleService events only
 - `ServiceName = 'draft-service'` — DraftService events only
 - `CorrelationId = '<id>'` — all events for a single request across all services
 
-**Quick check: Comment cache MISS then HIT**
+### Comment Cache MISS Then HIT
 
 1. Call `GET /api/comments/article/{articleId}` once, then call it again.
 2. In Seq, filter to CommentService and cache messages:
       `ServiceName = 'comment-service' and (@Message like '%not in cache%' or @Message like '%served from cache%' or @Message like '%Comment cache MISS%' or @Message like '%Comment cache HIT%')`
 3. Expected order: first request shows MISS (`not in cache` / `Comment cache MISS`), second request shows HIT (`served from cache` / `Comment cache HIT`).
 
-<img src="assets/images/commentcache.png" alt="Comment cache Seq example" width="800" />
+![Comment cache Seq example](assets/images/commentcache.png)
 
-**Quick check: Article cache MISS then HIT**
+### Article Cache MISS Then HIT
 
 1. Use two quick checks:
       - Guaranteed MISS: call `GET /api/articles/{random-guid}?continent={continent}` once.
@@ -127,23 +129,25 @@ cd src/DraftService/DraftService.Api && dotnet run
       - MISS path: `Cache MISS for article ...` and `Article ... not in cache — querying database`.
       - HIT path: `Cache HIT for article ...` and `Article ... served from cache ...`.
 
-Reason: `POST /api/articles` writes through to Redis immediately, so a follow-up `GET` for that new article is typically a HIT.
+Note: `POST /api/articles` writes through to Redis immediately, so a follow-up `GET` for that new article is typically a HIT.
 
-<img src="assets/images/articlecache.png" alt="Article cache Seq example" width="800" />
+![Article cache Seq example](assets/images/articlecache.png)
 
-**Quick check: Grafana cache dashboard**
+### Grafana Cache Dashboard
 
 1. Open `http://localhost:3000` and open the `HappyHeadlines — Cache Hit Ratios` dashboard.
 2. Set the time range to `Last 15 minutes`.
 3. Run a few article/comment cache requests, then refresh the dashboard to see Article/Comment hit ratio, hit vs miss counts, and Comment cache size.
 
-<img src="assets/images/grafana.png" alt="Grafana cache dashboard" width="800" />
+![Grafana cache dashboard](assets/images/grafana.png)
 
 Log levels: `Debug` (queries, dev only) → `Information` (business events) → `Warning` (not found, validation) → `Error` (exceptions, DB failures). Passwords, tokens, and PII are automatically redacted by `SensitivePropertyScrubber` before any log event leaves the process.
 
 ## 📚 API Endpoints
 
-**ArticleService** (via nginx `http://localhost:5000`)
+### ArticleService
+
+Via nginx `http://localhost:5000`
 
 | Method | Route | Description |
 | --- | --- | --- |
@@ -157,7 +161,9 @@ Log levels: `Debug` (queries, dev only) → `Information` (business events) → 
 | `POST` | `/api/profanity` | Add profanity word |
 | `GET` | `/api/profanity` | List all profanity words |
 
-**DraftService** (via nginx `http://localhost:5000`)
+### DraftService
+
+Via nginx `http://localhost:5000`
 
 | Method | Route | Description |
 | --- | --- | --- |
