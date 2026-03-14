@@ -97,6 +97,7 @@ cd src/DraftService/DraftService.Api && dotnet run
 | URL | What you see |
 | --- | --- |
 | `http://localhost:5380` | Seq — all structured logs and traces from every service |
+| `http://localhost:3000` | Grafana — pre-provisioned cache dashboard (`admin` / `admin`) |
 | `http://localhost:8081/scalar` | ArticleService OpenAPI (replica 1) |
 | `http://localhost:8084/scalar` | DraftService OpenAPI (replica 1) |
 
@@ -113,7 +114,7 @@ cd src/DraftService/DraftService.Api && dotnet run
       `ServiceName = 'comment-service' and (@Message like '%not in cache%' or @Message like '%served from cache%' or @Message like '%Comment cache MISS%' or @Message like '%Comment cache HIT%')`
 3. Expected order: first request shows MISS (`not in cache` / `Comment cache MISS`), second request shows HIT (`served from cache` / `Comment cache HIT`).
 
-![Comment cache Seq example](assets/images/commentcache.png)
+<img src="assets/images/commentcache.png" alt="Comment cache Seq example" width="800" />
 
 **Quick check: Article cache MISS then HIT**
 
@@ -128,7 +129,15 @@ cd src/DraftService/DraftService.Api && dotnet run
 
 Reason: `POST /api/articles` writes through to Redis immediately, so a follow-up `GET` for that new article is typically a HIT.
 
-![Article cache Seq example](assets/images/articlecache.png)
+<img src="assets/images/articlecache.png" alt="Article cache Seq example" width="800" />
+
+**Quick check: Grafana cache dashboard**
+
+1. Open `http://localhost:3000` and open the `HappyHeadlines — Cache Hit Ratios` dashboard.
+2. Set the time range to `Last 15 minutes`.
+3. Run a few article/comment cache requests, then refresh the dashboard to see Article/Comment hit ratio, hit vs miss counts, and Comment cache size.
+
+<img src="assets/images/grafana.png" alt="Grafana cache dashboard" width="800" />
 
 Log levels: `Debug` (queries, dev only) → `Information` (business events) → `Warning` (not found, validation) → `Error` (exceptions, DB failures). Passwords, tokens, and PII are automatically redacted by `SensitivePropertyScrubber` before any log event leaves the process.
 
