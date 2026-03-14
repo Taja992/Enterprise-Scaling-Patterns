@@ -36,7 +36,9 @@ public class ShardResolver : IShardResolver
             var optionsBuilder = new DbContextOptionsBuilder<ArticleDbContext>();
             optionsBuilder.UseNpgsql(connectionString);
 
-            _dbContexts[continent] = new ArticleDbContext(optionsBuilder.Options);
+            var context = new ArticleDbContext(optionsBuilder.Options);
+            context.Database.EnsureCreated();
+            _dbContexts[continent] = context;
         }
     }
 

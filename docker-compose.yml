@@ -68,7 +68,7 @@ services:
   article-api-1:
     build: .
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: Docker
       INSTANCE_ID: "1"
       Seq__ServerUrl: "http://seq:5341"
       OpenTelemetry__OtlpEndpoint: "http://seq:4317"
@@ -82,7 +82,7 @@ services:
   article-api-2:
     build: .
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: Docker
       INSTANCE_ID: "2"
       Seq__ServerUrl: "http://seq:5341"
       OpenTelemetry__OtlpEndpoint: "http://seq:4317"
@@ -96,7 +96,7 @@ services:
   article-api-3:
     build: .
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: Docker
       INSTANCE_ID: "3"
       Seq__ServerUrl: "http://seq:5341"
       OpenTelemetry__OtlpEndpoint: "http://seq:4317"
