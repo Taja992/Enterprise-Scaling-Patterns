@@ -11,18 +11,21 @@ public class CommentAppService : ICommentAppService
     private readonly ICommentRepository _repository;
     private readonly IProfanityServiceClient _profanityClient;
     private readonly CommentCircuitBreaker _circuitBreaker;
+    private readonly ICommentCache _cache;
     private readonly ILogger<CommentAppService> _logger;
 
     public CommentAppService(
         ICommentRepository repository,
         IProfanityServiceClient profanityClient,
         CommentCircuitBreaker circuitBreaker,
+        ICommentCache cache,
         ILogger<CommentAppService> logger
     )
     {
         _repository = repository;
         _profanityClient = profanityClient;
         _circuitBreaker = circuitBreaker;
+        _cache = cache;
         _logger = logger;
     }
 
@@ -97,6 +100,22 @@ public class CommentAppService : ICommentAppService
     {
         _logger.LogInformation("Fetching comments for article {ArticleId}", articleId);
 
+        var cached = await _cache.GetByArticleAsync(articleId);
+        if (cached is not null)
+        {
+            _logger.LogDebug(
+                "Comments for article {ArticleId} served from cache ({Count} comments)",
+                articleId,
+                cached.Count
+            );
+            return Result<List<CommentResponse>>.Success(cached);
+        }
+
+        _logger.LogDebug(
+            "Comments for article {ArticleId} not in cache — querying database",
+            articleId
+        );
+
         var comments = await _repository.GetByArticleIdAsync(articleId);
 
         _logger.LogInformation(
@@ -105,7 +124,11 @@ public class CommentAppService : ICommentAppService
             articleId
         );
 
-        return Result<List<CommentResponse>>.Success(comments.Select(MapToResponse).ToList());
+        var responses = comments.Select(MapToResponse).ToList();
+
+        await _cache.SetByArticleAsync(articleId, responses);
+
+        return Result<List<CommentResponse>>.Success(responses);
     }
 
     private static CommentResponse MapToResponse(Comment c) =>
