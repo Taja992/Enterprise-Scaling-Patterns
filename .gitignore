@@ -57,3 +57,4 @@ appsettings.*.json
 *.db-wal
 
 docs
+IMPLEMENTATION_GUIDE_v3.4_Dashboard.md
