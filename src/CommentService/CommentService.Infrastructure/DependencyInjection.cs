@@ -37,8 +37,7 @@ public static class DependencyInjection
         // Singleton — circuit state must survive across requests
         services.AddSingleton<CommentCircuitBreaker>();
 
-        var redisConnectionString =
-            configuration["Redis:ConnectionString"] ?? "localhost:6379";
+        var redisConnectionString = configuration["Redis:ConnectionString"] ?? "localhost:6379";
 
         services.AddSingleton<IConnectionMultiplexer>(_ =>
             ConnectionMultiplexer.Connect($"{redisConnectionString},abortConnect=false")

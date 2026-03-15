@@ -38,8 +38,7 @@ public class CommentRedisCache : ICommentCache
 
     private static string DataKey(Guid articleId) => $"comment:article:{articleId}";
 
-    private static double NowScore() =>
-        DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    private static double NowScore() => DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
     public async Task<List<CommentResponse>?> GetByArticleAsync(Guid articleId)
     {
@@ -72,7 +71,6 @@ public class CommentRedisCache : ICommentCache
             {
                 var evictedId = lruEntries[0].ToString();
 
-                
                 await _redis.KeyDeleteAsync(DataKey(Guid.Parse(evictedId)));
                 await _redis.SortedSetRemoveAsync(LruKey, evictedId);
 
