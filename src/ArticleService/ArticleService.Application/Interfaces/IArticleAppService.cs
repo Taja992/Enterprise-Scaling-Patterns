@@ -12,4 +12,5 @@ public interface IArticleAppService
         UpdateArticleRequest request
     );
     Task<bool> DeleteArticleAsync(Guid id, string continent);
+    Task<List<ArticleResponse>> GetAllArticlesAsync(string continent);
 }

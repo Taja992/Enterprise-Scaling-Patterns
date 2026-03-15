@@ -37,8 +37,8 @@ public static class ArticleEndpoints
         IArticleAppService articleService
     )
     {
-        // This could be expanded to support pagination
-        return Results.Ok($"Get all articles from {continent}");
+        var articles = await articleService.GetAllArticlesAsync(continent);
+        return Results.Ok(articles);
     }
 
     private static async Task<IResult> GetArticleById(

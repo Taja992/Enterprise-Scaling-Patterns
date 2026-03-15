@@ -52,4 +52,12 @@ public class ArticleRepository : IArticleRepository
         var dbContext = _shardResolver.GetDbContext(continent);
         return await dbContext.Articles.ToListAsync();
     }
+
+    public async Task<List<Article>> GetRecentArticlesAsync(string continent, DateTime since)
+    {
+        var dbContext = _shardResolver.GetDbContext(continent);
+        return await dbContext.Articles
+            .Where(a => a.PublishedAt >= since)
+            .ToListAsync();
+    }
 }

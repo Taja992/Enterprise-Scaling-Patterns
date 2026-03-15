@@ -9,4 +9,5 @@ public interface IArticleRepository
     Task UpdateAsync(Article article, string continent);
     Task DeleteAsync(Guid id, string continent);
     Task<List<Article>> GetAllByContinentAsync(string continent);
+    Task<List<Article>> GetRecentArticlesAsync(string continent, DateTime since); 
 }
