@@ -8,8 +8,14 @@
       "name": "📦 Article Service",
       "path": "src/ArticleService"
     },
-    { "name": "💬 Comment Service", "path": "src/CommentService" },
-    { "name": "🚫 Profanity Service", "path": "src/ProfanityService" },
+    {
+      "name": "💬 Comment Service",
+      "path": "src/CommentService"
+    },
+    {
+      "name": "🚫 Profanity Service",
+      "path": "src/ProfanityService"
+    },
     {
       "name": "📝 Draft Service",
       "path": "src/DraftService"

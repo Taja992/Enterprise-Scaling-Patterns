@@ -20,16 +20,15 @@ public static class DependencyInjection
         services.AddSingleton<IShardResolver, ShardResolver>();
         services.AddScoped<IArticleRepository, ArticleRepository>();
         services.AddScoped<IArticleAppService, ArticleAppService>();
-        
-        var redisConnectionString =
-            configuration["Redis:ConnectionString"] ?? "localhost:6379";
+
+        var redisConnectionString = configuration["Redis:ConnectionString"] ?? "localhost:6379";
 
         services.AddSingleton<IConnectionMultiplexer>(_ =>
             ConnectionMultiplexer.Connect($"{redisConnectionString},abortConnect=false")
         );
-        
+
         services.AddSingleton<IArticleCache, ArticleRedisCache>();
-        
+
         services.AddHostedService<ArticleCacheRefreshService>();
 
         return services;

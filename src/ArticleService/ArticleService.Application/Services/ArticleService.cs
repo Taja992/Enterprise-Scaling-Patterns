@@ -44,11 +44,7 @@ public class ArticleAppService : IArticleAppService
 
         if (cached is not null)
         {
-            _logger.LogDebug(
-                "Article {Id} served from cache (shard: {Continent})",
-                id,
-                continent
-            );
+            _logger.LogDebug("Article {Id} served from cache (shard: {Continent})", id, continent);
 
             return cached;
         }
@@ -122,10 +118,7 @@ public class ArticleAppService : IArticleAppService
 
     public async Task<List<ArticleResponse>> GetAllArticlesAsync(string continent)
     {
-        _logger.LogInformation(
-            "Fetching all articles for shard {Continent}",
-            continent
-        );
+        _logger.LogInformation("Fetching all articles for shard {Continent}", continent);
 
         var articles = await _repository.GetAllByContinentAsync(continent);
 

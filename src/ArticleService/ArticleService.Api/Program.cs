@@ -1,10 +1,9 @@
 using ArticleService.Api.Endpoints;
 using ArticleService.Infrastructure;
-using HappyHeadlines.Observability;
 using ArticleService.Infrastructure.Sharding;
+using HappyHeadlines.Observability;
 using Prometheus;
 using Scalar.AspNetCore;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,7 +29,7 @@ using (var scope = app.Services.CreateScope())
         "NorthAmerica",
         "Oceania",
         "SouthAmerica",
-        "Global"
+        "Global",
     };
 
     foreach (var continent in continents)
@@ -65,10 +64,8 @@ using (var scope = app.Services.CreateScope())
 
 app.UseHappyHeadlinesObservability();
 
-
-    app.MapOpenApi();
-    app.MapScalarApiReference();
-
+app.MapOpenApi();
+app.MapScalarApiReference();
 
 app.UseHttpsRedirection();
 

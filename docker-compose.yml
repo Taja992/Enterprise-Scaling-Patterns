@@ -1,10 +1,5 @@
-version: "3.9"
-
 services:
-  
-  # ─────────────────────────────────────────────────────────────
-  # NGINX Load Balancer
-  # ─────────────────────────────────────────────────────────────
+  # ── nginx — round robin load balancing ──────────────────────────────────
   nginx:
     image: nginx:alpine
     ports:
@@ -15,45 +10,30 @@ services:
       - article-api-1
       - article-api-2
       - article-api-3
-      - comment-api-1
-      - comment-api-2
-      - comment-api-3
-      - draft-api-1
-      - draft-api-2
-      - draft-api-3
-  
-  
-  # ─────────────────────────────────────────────────────────────
-  # Seq Logging + Tracing
-  # ─────────────────────────────────────────────────────────────
+
+  # ── Seq — central log and trace repository ──────────────────────────────────
   seq:
     image: datalust/seq:latest
     environment:
       ACCEPT_EULA: "Y"
       SEQ_FIRSTRUN_NOAUTHENTICATION: "true"
+      # Storage cap triggers automatic deletion of oldest events — no code needed
       SEQ_DATA_STORAGE_SIZE: 2GB
-      SEQ_LISTEN_URLS: "http://0.0.0.0:80;http://0.0.0.0:5341"
     ports:
-      - "5380:80"
-      - "5341:5341"
-      - "4317:4317"
+      - "5380:80" # Seq web UI: http://localhost:5380
+      - "5341:5341" # Serilog sink ingestion
+      - "4317:4317" # OTLP gRPC trace ingestion
     volumes:
       - seq-data:/data
-  
-  
-  # ─────────────────────────────────────────────────────────────
-  # Redis Cache
-  # ─────────────────────────────────────────────────────────────
+
+    # ── Redis — shared cache for ArticleService and CommentService ────────────────
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
     command: redis-server --maxmemory 512mb --maxmemory-policy noeviction
-  
-  
-  # ─────────────────────────────────────────────────────────────
-  # Prometheus Metrics
-  # ─────────────────────────────────────────────────────────────
+
+     # ── Prometheus — metrics scraper ─────────────────────────────────────────────
   prometheus:
     image: prom/prometheus:latest
     ports:
@@ -67,11 +47,8 @@ services:
       - comment-api-1
       - comment-api-2
       - comment-api-3
-  
-  
-  # ─────────────────────────────────────────────────────────────
-  # Grafana Dashboards
-  # ─────────────────────────────────────────────────────────────
+
+        # ── Grafana — dashboard UI ────────────────────────────────────────────────────
   grafana:
     image: grafana/grafana:latest
     ports:
@@ -86,17 +63,12 @@ services:
       - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
     depends_on:
       - prometheus
-  
-  
-  # ─────────────────────────────────────────────────────────────
-  # ARTICLE SERVICE (3 replicas)
-  # ─────────────────────────────────────────────────────────────
+
+  # ── Article API — 3 load-balanced replicas ────────────────────────────────────
   article-api-1:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: Docker
       INSTANCE_ID: "1"
       Seq__ServerUrl: "http://seq:5341"
       OpenTelemetry__OtlpEndpoint: "http://seq:4317"
@@ -108,11 +80,9 @@ services:
       - redis
 
   article-api-2:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: Docker
       INSTANCE_ID: "2"
       Seq__ServerUrl: "http://seq:5341"
       OpenTelemetry__OtlpEndpoint: "http://seq:4317"
@@ -124,11 +94,9 @@ services:
       - redis
 
   article-api-3:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: Docker
       INSTANCE_ID: "3"
       Seq__ServerUrl: "http://seq:5341"
       OpenTelemetry__OtlpEndpoint: "http://seq:4317"
@@ -138,11 +106,8 @@ services:
     depends_on:
       - seq
       - redis
-  
-  
-  # ─────────────────────────────────────────────────────────────
-  # DRAFT SERVICE
-  # ─────────────────────────────────────────────────────────────
+
+  # ── Draft API — 3 load-balanced replicas ────────────────────────────────────
   draft-api-1:
     build:
       context: .
@@ -190,11 +155,57 @@ services:
     depends_on:
       - db-draft
       - seq
-  
-  
-  # ─────────────────────────────────────────────────────────────
-  # COMMENT SERVICE
-  # ─────────────────────────────────────────────────────────────
+
+  # ── Profanity API — 3 load-balanced replicas ─────────────────────────────────
+  profanity-api-1:
+    build:
+      context: .
+      dockerfile: Dockerfile.ProfanityService
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      INSTANCE_ID: "1"
+      ConnectionStrings__ProfanityDb: "Host=db-profanity;Port=5432;Database=profanity;Username=postgres;Password=postgres"
+      Seq__ServerUrl: "http://seq:5341"
+      OpenTelemetry__OtlpEndpoint: "http://seq:4317"
+    ports:
+      - "8090:8080"
+    depends_on:
+      - db-profanity
+      - seq
+
+  profanity-api-2:
+    build:
+      context: .
+      dockerfile: Dockerfile.ProfanityService
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      INSTANCE_ID: "2"
+      ConnectionStrings__ProfanityDb: "Host=db-profanity;Port=5432;Database=profanity;Username=postgres;Password=postgres"
+      Seq__ServerUrl: "http://seq:5341"
+      OpenTelemetry__OtlpEndpoint: "http://seq:4317"
+    ports:
+      - "8091:8080"
+    depends_on:
+      - db-profanity
+      - seq
+
+  profanity-api-3:
+    build:
+      context: .
+      dockerfile: Dockerfile.ProfanityService
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      INSTANCE_ID: "3"
+      ConnectionStrings__ProfanityDb: "Host=db-profanity;Port=5432;Database=profanity;Username=postgres;Password=postgres"
+      Seq__ServerUrl: "http://seq:5341"
+      OpenTelemetry__OtlpEndpoint: "http://seq:4317"
+    ports:
+      - "8092:8080"
+    depends_on:
+      - db-profanity
+      - seq
+
+  # ── Comment API — 3 load-balanced replicas ────────────────────────────────────
   comment-api-1:
     build:
       context: .
@@ -203,15 +214,17 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       INSTANCE_ID: "1"
       ConnectionStrings__CommentDb: "Host=db-comment;Port=5432;Database=comments;Username=postgres;Password=postgres"
-      Redis__ConnectionString: "redis:6379"
+      ProfanityService__BaseUrl: "http://profanity-api-1:8080"
       Seq__ServerUrl: "http://seq:5341"
       OpenTelemetry__OtlpEndpoint: "http://seq:4317"
+      Redis__ConnectionString: "redis:6379"
     ports:
       - "8087:8080"
     depends_on:
       - db-comment
-      - redis
+      - profanity-api-1
       - seq
+      - redis
 
   comment-api-2:
     build:
@@ -221,15 +234,17 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       INSTANCE_ID: "2"
       ConnectionStrings__CommentDb: "Host=db-comment;Port=5432;Database=comments;Username=postgres;Password=postgres"
-      Redis__ConnectionString: "redis:6379"
+      ProfanityService__BaseUrl: "http://profanity-api-1:8080"
       Seq__ServerUrl: "http://seq:5341"
       OpenTelemetry__OtlpEndpoint: "http://seq:4317"
+      Redis__ConnectionString: "redis:6379"
     ports:
       - "8088:8080"
     depends_on:
       - db-comment
-      - redis
+      - profanity-api-1
       - seq
+      - redis
 
   comment-api-3:
     build:
@@ -239,20 +254,19 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       INSTANCE_ID: "3"
       ConnectionStrings__CommentDb: "Host=db-comment;Port=5432;Database=comments;Username=postgres;Password=postgres"
-      Redis__ConnectionString: "redis:6379"
+      ProfanityService__BaseUrl: "http://profanity-api-1:8080"
       Seq__ServerUrl: "http://seq:5341"
       OpenTelemetry__OtlpEndpoint: "http://seq:4317"
+      Redis__ConnectionString: "redis:6379"
     ports:
       - "8089:8080"
     depends_on:
       - db-comment
-      - redis
+      - profanity-api-1
       - seq
-  
-  
-  # ─────────────────────────────────────────────────────────────
-  # DATABASES
-  # ─────────────────────────────────────────────────────────────
+      - redis
+
+  # ── 8 Region Article databases ───────────────────────────────────────────────────────────
   db-africa:
     image: postgres:16
     environment:
@@ -325,6 +339,7 @@ services:
     ports:
       - "5439:5432"
 
+  # ── Comment database ───────────────────────────────────────────────────────────
   db-comment:
     image: postgres:16
     environment:
@@ -334,6 +349,17 @@ services:
     ports:
       - "5440:5432"
 
+  # ── Profanity database ───────────────────────────────────────────────────────────
+  db-profanity:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: profanity
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5441:5432"
+
+  # ── Draft database ───────────────────────────────────────────────────────────
   db-draft:
     image: postgres:16
     environment:
@@ -345,8 +371,7 @@ services:
     volumes:
       - db-draft-data:/var/lib/postgresql/data
 
-
 volumes:
   seq-data:
-  grafana-data:
   db-draft-data:
+  grafana-data:

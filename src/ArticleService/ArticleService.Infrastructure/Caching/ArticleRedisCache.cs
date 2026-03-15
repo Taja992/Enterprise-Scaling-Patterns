@@ -20,7 +20,7 @@ public class ArticleRedisCache : IArticleCache
         "Total number of ArticleCache misses.",
         new CounterConfiguration { LabelNames = new[] { "shard" } }
     );
-    
+
     private static readonly TimeSpan Ttl = TimeSpan.FromHours(36);
 
     private readonly IDatabase _redis;
@@ -31,7 +31,7 @@ public class ArticleRedisCache : IArticleCache
         _redis = connection.GetDatabase();
         _logger = logger;
     }
-    
+
     private static string BuildKey(Guid id, string continent) =>
         $"article:{continent.ToLowerInvariant()}:{id}";
 
@@ -64,6 +64,7 @@ public class ArticleRedisCache : IArticleCache
         var tasks = articles.Select(SetAsync);
         await Task.WhenAll(tasks);
     }
+
     public async Task RemoveAsync(string cacheKey)
     {
         await _redis.KeyDeleteAsync(cacheKey);

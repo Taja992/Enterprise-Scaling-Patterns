@@ -35,7 +35,7 @@ public class ArticleCacheRefreshService : BackgroundService
         );
 
         await RefreshAllShardsAsync(stoppingToken);
-        
+
         using var timer = new PeriodicTimer(RefreshInterval);
         while (await timer.WaitForNextTickAsync(stoppingToken))
         {
@@ -53,7 +53,8 @@ public class ArticleCacheRefreshService : BackgroundService
 
         foreach (var continent in Enum.GetValues<Continent>())
         {
-            if (ct.IsCancellationRequested) break;
+            if (ct.IsCancellationRequested)
+                break;
 
             try
             {
@@ -61,11 +62,7 @@ public class ArticleCacheRefreshService : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError(
-                    ex,
-                    "Failed to refresh cache for shard {Continent}",
-                    continent
-                );
+                _logger.LogError(ex, "Failed to refresh cache for shard {Continent}", continent);
             }
         }
 
