@@ -1,16 +1,25 @@
 using ArticleService.Application.DTOs.Articles;
 using ArticleService.Application.Interfaces;
 using ArticleService.Domain.Entities;
+using Microsoft.Extensions.Logging;
 
 namespace ArticleService.Application.Services;
 
 public class ArticleAppService : IArticleAppService
 {
     private readonly IArticleRepository _repository;
+    private readonly IArticleCache _cache;
+    private readonly ILogger<ArticleAppService> _logger;
 
-    public ArticleAppService(IArticleRepository repository)
+    public ArticleAppService(
+        IArticleRepository repository,
+        IArticleCache cache,
+        ILogger<ArticleAppService> logger
+    )
     {
         _repository = repository;
+        _cache = cache;
+        _logger = logger;
     }
 
     public async Task<ArticleResponse> CreateArticleAsync(CreateArticleRequest request)
@@ -24,11 +33,29 @@ public class ArticleAppService : IArticleAppService
 
         var created = await _repository.CreateAsync(article, request.Continent);
 
+        // Write the new article into the cache immediately so it is visible
+        // without waiting for the next background refresh cycle.
+        await _cache.SetAsync(MapToResponse(created));
+
         return MapToResponse(created);
     }
 
     public async Task<ArticleResponse?> GetArticleAsync(Guid id, string continent)
     {
+        // ── Cache-first read ──────────────────────────────────────────────────
+        var cached = await _cache.GetAsync(id, continent);
+        if (cached is not null)
+        {
+            _logger.LogDebug("Article {Id} served from cache (shard: {Continent})", id, continent);
+            return cached;
+        }
+
+        // ── Cache miss — fall back to database ────────────────────────────────
+        _logger.LogDebug(
+            "Article {Id} not in cache — querying database (shard: {Continent})",
+            id,
+            continent
+        );
         var article = await _repository.GetByIdAsync(id, continent);
         return article is not null ? MapToResponse(article) : null;
     }
@@ -47,6 +74,9 @@ public class ArticleAppService : IArticleAppService
         article.Update(request.Title, request.Content);
         await _repository.UpdateAsync(article, continent);
 
+        // Keep the cache consistent with the updated version.
+        await _cache.SetAsync(MapToResponse(article));
+
         return MapToResponse(article);
     }
 
@@ -61,9 +91,8 @@ public class ArticleAppService : IArticleAppService
         return true;
     }
 
-    private static ArticleResponse MapToResponse(Article article)
-    {
-        return new ArticleResponse(
+    private static ArticleResponse MapToResponse(Article article) =>
+        new(
             article.Id,
             article.Title,
             article.Content,
@@ -71,5 +100,4 @@ public class ArticleAppService : IArticleAppService
             article.PublishedAt,
             article.PublisherId
         );
-    }
 }

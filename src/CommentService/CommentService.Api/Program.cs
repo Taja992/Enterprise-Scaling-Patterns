@@ -2,6 +2,7 @@ using CommentService.Api.Endpoints;
 using CommentService.Infrastructure;
 using CommentService.Infrastructure.Persistence;
 using HappyHeadlines.Observability;
+using Prometheus;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -32,5 +33,6 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.MapCommentEndpoints();
+app.MapMetrics();
 
 app.Run();

@@ -1,6 +1,7 @@
 using ArticleService.Api.Endpoints;
 using ArticleService.Infrastructure;
 using HappyHeadlines.Observability;
+using Prometheus;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,7 +17,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 var app = builder.Build();
 
 // ── Middleware ────────────────────────────────────────────────────────────────
-app.UseHappyHeadlinesObservability(); // CorrelationId + Serilog request logging
+app.UseHappyHeadlinesObservability();
 
 if (app.Environment.IsDevelopment())
 {
@@ -27,5 +28,6 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.MapArticleEndpoints();
+app.MapMetrics(); // <-- exposes /metrics for Prometheus to scrape
 
 app.Run();
